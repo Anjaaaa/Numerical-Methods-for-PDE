@@ -5,13 +5,9 @@ import scipy.linalg as la
 # Basic plotting routines from the matplotlib library 
 import matplotlib.pyplot as plt
 
-
-# package for linear regression
-from scipy.optimize import curve_fit
-
-
+# exact solution
 def uExact(x):
-    return np.cos(2*np.pi*x)
+    return x + np.cos(2*np.pi*x)
 
 ################################################
 ################################################
@@ -131,39 +127,19 @@ for i in range(0,len(n)):
     a_err_max[i] = max(a_err[i,1,:])
     b_err_max[i] = max(b_err[i,1,:])
 
+
 # create new array because python has a problem with 1/n
 h = np.zeros(len(n))
 for i in range(0,len(n)):
     h[i] = 1/n[i]
 
-# linear regression to see whether the functions are linear in the loglog plot or rather quadratic
-err_log_a = np.log(a_err_max)
-err_log_b = np.log(b_err_max)
-h_log = np.log(h)
-
-def linear(x, a, b):
-    return a*x + b
-
-params_a, cov_a = curve_fit(linear, h_log, err_log_a)
-params_b, cov_b = curve_fit(linear, h_log, err_log_b)
-
-# end of linear regression
-
 
 plt.loglog(h, a_err_max, 'rx', label = 'Dirichlet')
 plt.loglog(h, b_err_max, 'bx', label = 'Mixed')
-x = np.linspace(0.001,1,1000)
-regression_a = np.exp(linear(np.log(x), params_a[0], params_a[1]))
-regression_b = np.exp(linear(np.log(x), params_b[0], params_b[1]))
-
-plt.loglog(x, regression_a, 'k--')
-plt.loglog(x, regression_b, 'k--')
 
 plt.legend(loc='best')
 plt.xlabel('$h$')
 plt.ylabel('$\|E(h)\|_\infty$')
-plt.xlim(h[0]-0.003, h[len(h)-1]+0.05)
-plt.ylim(5*10**(-4), 10)
 plt.show()
 plt.clf()
 
@@ -174,8 +150,6 @@ plt.clf()
 ################################################
 # Exercise part c
 ################################################
-
-
 
 # Error-Array
 c_err = np.zeros((5,2,65))
@@ -231,35 +205,35 @@ c_err_max = np.zeros(len(n))
 for i in range(0,len(n)):
     c_err_max[i] = max(c_err[i,1,:])
 
-# linear regression to see whether the functions are linear in the loglog plot or rather quadratic
-err_log_c = np.log(c_err_max)
 
-def linear(x, a, b):
-    return a*x + b
+# experimental order of convergence
+EOC_a = np.zeros(len(n)-1)
+EOC_b = np.zeros(len(n)-1)
+EOC_c = np.zeros(len(n)-1)
 
-params_c, cov_c = curve_fit(linear, h_log, err_log_c)
-# end of linear regression
+for i in range(0,len(EOC_a)):
+    EOC_a[i] = np.log(a_err_max[i]/a_err_max[i+1])/np.log(2)
+    EOC_b[i] = np.log(b_err_max[i]/b_err_max[i+1])/np.log(2)
+    EOC_c[i] = np.log(c_err_max[i]/c_err_max[i+1])/np.log(2)
 
 
 plt.loglog(h, c_err_max, 'rx', label = 'Dirichlet')
-x = np.linspace(0.001,1,1000)
-regression_c = np.exp(linear(np.log(x), params_c[0], params_c[1]))
-
-plt.loglog(x, regression_c, 'k--')
-
 plt.legend(loc='best')
 plt.xlabel('$h$')
 plt.ylabel('$\|E(h)\|_\infty$')
-plt.xlim(h[0]-0.003, h[len(h)-1]+0.05)
-plt.ylim(1,10)
 plt.show()
 plt.clf()
 
 
-# Accuracy
-
-for i in range(0,len(n)):
-    plt.plot(a_err[i,0,range(0,n[i]+1)], a_err[i,1,range(0,n[i]+1)], "-", color = color[i], label = str(n[i]))
-    plt.plot(b_err[i,0,range(0,n[i]+1)], b_err[i,1,range(0,n[i]+1)], "--", color = color[i])#, label = str(n[i]))
+# EOC
+plt.plot(h[:-1], EOC_a, "rx", label = 'a) Dirichlet b.c. with old u(x)')
+plt.plot(h[:-1], EOC_b, "bx", label = 'b) mixed b.c. with old u(x)')
+plt.plot(h[:-1], EOC_c, "yx", label = 'c) mixed b.c. with new u(x)')
 plt.legend(loc='best')
 plt.show()
+plt.clf()
+
+print("Average EOC a: ", np.mean(EOC_a))
+print("Average EOC b: ", np.mean(EOC_b))
+print("Average EOC c: ", np.mean(EOC_c))
+
